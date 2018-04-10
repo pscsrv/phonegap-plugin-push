@@ -1,8 +1,11 @@
 package com.adobe.phonegap.push;
 
+import android.annotation.TargetApi;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -46,6 +49,29 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
         return this.cordova.getActivity().getApplicationContext();
     }
 
+    @TargetApi(26)
+    private void createDefaultNotificationChannelIfNeeded(JSONObject options) {
+        String id;
+        // only call on Android O and above
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            final NotificationManager notificationManager = (NotificationManager) cordova.getActivity()
+                    .getSystemService(Context.NOTIFICATION_SERVICE);
+            List<NotificationChannel> channels = notificationManager.getNotificationChannels();
+
+            for (int i=0; i<channels.size(); i++ ) {
+                id = channels.get(i).getId();
+                if (id.equals(DEFAULT_CHANNEL_ID)) {
+                    return;
+                }
+            }
+            NotificationChannel mChannel = new NotificationChannel(DEFAULT_CHANNEL_ID, "PhoneGap PushPlugin",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            mChannel.enableVibration(options.optBoolean(VIBRATE, true));
+            mChannel.setShowBadge(true);
+            notificationManager.createNotificationChannel(mChannel);
+        }
+    }
+
     @Override
     public boolean execute(final String action, final JSONArray data, final CallbackContext callbackContext) {
         Log.v(LOG_TAG, "execute: action=" + action);
@@ -63,6 +89,9 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
 
                     try {
                         jo = data.getJSONObject(0).getJSONObject(ANDROID);
+
+                        // If no NotificationChannels exist create the default one
+                        createDefaultNotificationChannelIfNeeded(jo);
 
                         Log.v(LOG_TAG, "execute: jo=" + jo.toString());
 
