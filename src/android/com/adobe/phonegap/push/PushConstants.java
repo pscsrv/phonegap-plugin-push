@@ -81,5 +81,7 @@ public interface PushConstants {
     public static final String SUBJECT = "subject";
     public static final String PUSH_DISMISSED = "push_dismissed";
     public static final String DEFAULT_CHANNEL_ID = "PushPluginChannel";
+    public static final String DEFAULT_CHANNEL_ID_KEY = "com.adobe.phonegap.push.default_channel_id";
+    public static final String DEFAULT_CHANNEL_NAME_KEY = "com.adobe.phonegap.push.default_channel_name";
     public static final String ANDROID_CHANNEL_ID = "android_channel_id";
 }
