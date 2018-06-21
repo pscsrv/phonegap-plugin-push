@@ -1,10 +1,13 @@
 package com.adobe.phonegap.push;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -57,14 +60,16 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
             final NotificationManager notificationManager = (NotificationManager) cordova.getActivity()
                     .getSystemService(Context.NOTIFICATION_SERVICE);
             List<NotificationChannel> channels = notificationManager.getNotificationChannels();
+            final String defaultChannelId = getStringMetaData(DEFAULT_CHANNEL_ID_KEY, DEFAULT_CHANNEL_ID);
+            final String defaultChannelName = getStringMetaData(DEFAULT_CHANNEL_NAME_KEY, "PhoneGap PushPlugin");
 
             for (int i=0; i<channels.size(); i++ ) {
                 id = channels.get(i).getId();
-                if (id.equals(DEFAULT_CHANNEL_ID)) {
+                if (id.equals(defaultChannelId)) {
                     return;
                 }
             }
-            NotificationChannel mChannel = new NotificationChannel(DEFAULT_CHANNEL_ID, "PhoneGap PushPlugin",
+            NotificationChannel mChannel = new NotificationChannel(defaultChannelId, defaultChannelName,
                     NotificationManager.IMPORTANCE_DEFAULT);
             mChannel.enableVibration(options.optBoolean(VIBRATE, true));
             mChannel.setShowBadge(true);
@@ -517,5 +522,16 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
 
     protected static void setRegistrationID(String token) {
         registration_id = token;
+    }
+
+    private String getStringMetaData(String key, String defaultValue) {
+        try {
+            ApplicationInfo appInfo = this.cordova.getActivity().getPackageManager()
+                    .getApplicationInfo(this.cordova.getActivity().getPackageName(),
+                            PackageManager.GET_META_DATA);
+            return appInfo.metaData.getString(key, defaultValue);
+        } catch (PackageManager.NameNotFoundException e) {
+            return null;
+        }
     }
 }

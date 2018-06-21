@@ -9,6 +9,8 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -374,7 +376,7 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
                 if (channels.size() == 1) {
                     channelID = channels.get(0).getId();
                 } else {
-                    channelID = extras.getString(ANDROID_CHANNEL_ID, DEFAULT_CHANNEL_ID);
+                    channelID = extras.getString(ANDROID_CHANNEL_ID, getStringMetaData(DEFAULT_CHANNEL_ID_KEY, DEFAULT_CHANNEL_ID));
                 }
                 Log.d(LOG_TAG, "Using channel ID = " + channelID);
                 mBuilder = new NotificationCompat.Builder(context, channelID);
@@ -898,5 +900,15 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
         String savedSenderID = sharedPref.getString(SENDER_ID, "");
 
         return from.equals(savedSenderID) || from.startsWith("/topics/");
+    }
+
+    private String getStringMetaData(String key, String defaultValue) {
+        try {
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(getPackageName(),
+                    PackageManager.GET_META_DATA);
+            return appInfo.metaData.getString(key, defaultValue);
+        } catch (PackageManager.NameNotFoundException e) {
+            return null;
+        }
     }
 }
